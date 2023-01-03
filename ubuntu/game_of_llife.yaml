@@ -1,0 +1,28 @@
+---
+sudo apt update
+sudo apt install openjdk-8-jdk -y
+sudo apt install tomcat9 -y
+wget https://referenceapplicationskhaja.s3.us-west-2.amazonaws.com/gameoflife.war
+sudo cp gameoflife.war /var/lib/tomcat9/webapps/
+sudo systemctl restart tomcat9.service
+---
+
+---
+- name: Deploying game_of_life.war application
+  become: yes 
+  hosts: all
+  tasks:
+    - name : Installing java  and tomcat9
+      ansible.builtin.apt: 
+        name: 
+          - openjdk-8-jdk
+          - tomcat9   
+        update_cache: yes 
+        state: present
+    - name: Downloading game_of_life.war file 
+      ansible.builtin.get_url:
+        url: https://referenceapplicationskhaja.s3.us-west-2.amazonaws.com/gameoflife.war
+        dest: /var/lib/tomcat9/webapps/gameoflife.war
+      notify:
+        - restart tomcat9.service
+      

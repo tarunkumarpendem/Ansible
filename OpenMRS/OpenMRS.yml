@@ -1,0 +1,157 @@
+#  1  sudo apt update
+#  2  sudo apt install openjdk-11-jdk -y
+#  3  sudo useradd -m -U -d /opt/tomcat -s /bin/false tomcat
+#  4  wget https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.65/bin/apache-tomcat-9.0.65.tar.gz
+#  5  sudo tar -xzvf apache-tomcat-9.0.65.tar.gz -C /opt/tomcat/
+#  6  sudo ln -s /opt/tomcat/apache-tomcat-9.0.65 /opt/tomcat/latest
+#  7  sudo chown -R tomcat: /opt/tomcat
+#  8  sudo sh -c 'chmod +x /opt/tomcat/latest/bin/*.sh'
+#  9  sudo vi /etc/systemd/system/tomcat.service
+#  10  sudo systemctl daemon-reload
+#  11  sudo systemctl enable tomcat.service
+#  12  sudo systemctl start tomcat.service
+#  13  sudo systemctl status tomcat.service
+#  14  sudo mkdir /var/lib/OpenMRS
+#  15  sudo chown -R tomcat:tomcat /var/lib/OpenMRS
+#  16  wget https://sourceforge.net/projects/openmrs/files/releases/OpenMRS_Platform_2.5.0/openmrs.war
+#  17  sudo cp openmrs.war /opt/tomcat/apache-tomcat-9.0.65/webapps/
+#  18  sudo chown -R tomcat:tomcat /opt/tomcat/apache-tomcat-9.0.65/webapps/openmrs.war
+#  19  sudo systemctl restart tomcat.service
+
+---
+- name: Installing OpenMRS
+  become: yes
+  hosts: ubuntu
+  vars:
+    Java_package_Name: openjdk-11-jdk
+    tomcat_user_name: tomcat
+    tomcat_home_directory: /opt/tomcat
+    tomcat_shell: /bin/false
+    tomcat_tar_file_url: https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.65/bin/apache-tomcat-9.0.65.tar.gz
+    tomcat_service_file_location: /etc/systemd/system/tomcat.service
+    OpenMRS_path: /var/lib/OpenMRS
+    OpenMRS_warfile_url: https://sourceforge.net/projects/openmrs/files/releases/OpenMRS_Platform_2.5.0/openmrs.war 
+  tasks:
+    - name: using debug
+      ansible.builtin.debug:
+        msg: Installing Java package
+    - name: Installing java
+      ansible.builtin.apt:
+        name: "{{ Java_package_Name }}"
+        state: present
+    - name: using debug
+      ansible.builtin.debug:
+        msg: Creating tomcat user '{{ tomcat_user_name }}' in '{{ tomcat_home_directory }}' in shell  '{{ tomcat_shell }}'
+    - name: creating tomcat user
+      ansible.builtin.user:
+        name: "{{ tomcat_user_name }}"
+        create_home: yes
+        shell: "{{ tomcat_shell }}"
+        home: "{{ tomcat_home_directory }}"
+    - name: using debug
+      ansible.builtin.debug:
+        msg: Downloading tomcat tar file using '{{ tomcat_tar_file_url }}' to '{{ tomcat_home_directory }}'
+    - name: Downloading tomcat's 'tar' file
+      ansible.builtin.get_url:
+        url: "{{ tomcat_tar_file_url }}"
+        dest: "{{ tomcat_home_directory }}"
+      notify:
+        - Extracting tomcat 'tar' file
+    - name: using debug
+      ansible.builtin.debug:
+        msg: Creating a symbolic link 'latest' for tomcat user in  {{ tomcat_home_directory }}
+    - name: create symlink
+      ansible.builtin.file:
+        src: "{{ tomcat_home_directory }}/apache-tomcat-9.0.65"
+        dest: "{{ tomcat_home_directory }}/latest"
+        owner: "{{ tomcat_user_name }}"
+        group: "{{ tomcat_user_name }}"
+        state: link
+    - name: using debug
+      ansible.builtin.debug:
+        msg: changing the ownership permissions of the  '{{ tomcat_home_directory }}' from 'root' to '{{ tomcat_user_name }}'
+    - name: Recursively changing the ownership of tomcat user
+      ansible.builtin.file:
+        path: "{{ tomcat_home_directory }}"
+        recurse: yes
+        owner: "{{ tomcat_user_name }}"
+        group: "{{ tomcat_user_name }}"
+    - name: using debug
+      ansible.builtin.debug:
+        msg: Giving execute permissions to all the '.sh' files in the bin directory of '{{ tomcat_home_directory }}/latest'
+    - name: adding execute permissions to all the '.sh' files
+      ansible.builtin.file:
+        path: "{{ item }}"
+        mode: "+x"
+      with_fileglob:
+        - "{{ tomcat_home_directory }}/latest/bin/*.sh"
+    - name: using debug
+      ansible.builtin.debug:
+        msg: Copying tomcat's service file from 'tomcat_service' to '{{ tomcat_service_file_location }}'
+    - name: copying tomcat unit file
+      ansible.builtin.copy:
+        src: tomcat.service
+        dest: "{{ tomcat_service_file_location }}"
+      notify:
+        - starting tomcat 
+    - name: debug
+      ansible.builtin.debug:
+        msg: creating '{{ OpenMRS_path }}' 
+    - name: creating directories
+      ansible.builtin.file:
+        path: "{{ OpenMRS_path }}"
+        state: directory
+    - name: debug
+      ansible.builtin.debug:
+        msg: Recursively changing the ownership of '{{ OpenMRS_path }}' to '{{ tomcat_user_name }}'
+    - name: changing the ownership  of OpenMRS   
+      ansible.builtin.file:
+        path: "{{ OpenMRS_path }}"
+        group: "{{ tomcat_user_name }}"
+        owner: "{{ tomcat_user_name }}"
+    - name: debug
+      ansible.builtin.debug:
+        msg: Downloading OpenMRS war file using the url 'https://sourceforge.net/projects/openmrs/files/releases/OpenMRS_Platform_2.5.0/openmrs.war' to '{{ OpenMRS_path }}'                 
+    - name: Downloading OpenMRS war file
+      ansible.builtin.get_url:
+        url: "{{ OpenMRS_warfile_url }}"
+        dest: "{{ OpenMRS_path }}"
+    - name: debug
+      ansible.builtin.debug:
+        msg: Copying Openmrs.war file from '{{ OpenMRS_path }}' to  '{{ tomcat_home_directory }}/apache-tomcat-9.0.65/webapps'
+    - name: copying openmrs.war file
+      ansible.builtin.copy:
+        src: "{{ OpenMRS_path }}/openmrs.war"
+        dest: "{{ tomcat_home_directory }}/apache-tomcat-9.0.65/webapps/openmrs.war"
+        remote_src: yes
+    - name: debug
+      ansible.builtin.debug:
+        msg: Recursively changing the ownership of '{{ tomcat_home_directory }}/apache-tomcat-9.0.65' to '{{ tomcat_user_name }}'
+    - name: changing openmra.war path ownership to tomcat
+      ansible.builtin.file:
+        path: "{{ tomcat_home_directory }}/apache-tomcat-9.0.65"
+        group: "{{ tomcat_user_name }}"
+        owner: "{{ tomcat_user_name }}"
+        recurse: yes
+      notify:
+        - Restarting tomcat 
+  handlers:
+    - name: starting tomcat
+      ansible.builtin.systemd:
+        name: tomcat
+        daemon_reload: yes
+        enabled: yes
+        state: started
+    - name: using debug
+      ansible.builtin.debug:
+        msg: Extracting tomcat 'tar' file from '{{ tomcat_home_directory }}/apache-tomcat-9.0.65.tar.gz' to '{{ tomcat_home_directory }}'
+    - name: Extracting tomcat 'tar' file
+      ansible.builtin.unarchive:
+        src: "{{ tomcat_home_directory }}/apache-tomcat-9.0.65.tar.gz"
+        dest: "{{ tomcat_home_directory }}"
+        remote_src: yes
+    - name: Restarting tomcat
+      ansible.builtin.systemd:
+        name: tomcat
+        state: restarted    
+    

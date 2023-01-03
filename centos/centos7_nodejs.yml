@@ -1,0 +1,15 @@
+---
+    - name: installing git
+      become: yes
+      hosts: centos
+      tasks:
+        - name: Install epel-release
+          ansible.builtin.yum:
+            name: epel-release
+            state: present
+            update_cache: yes
+        - name: Install nodejs
+          ansible.builtin.yum:
+            name: nodejs
+            state: present
+            update_cache: yes

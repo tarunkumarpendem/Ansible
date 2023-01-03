@@ -1,0 +1,15 @@
+ubuntu_server:
+  hosts:
+    172.31.15.119:
+      java_tar_location_ansible: /tmp/jdk-11.0.15_linux-x64_bin.tar.gz
+      java_tar_location_node: /usr/lib/jvm
+      java_env_file: environment.env
+      java_env_file_dest: /etc/environment
+
+centos_server:
+  hosts:
+    172.31.6.55:
+      java_tar_location_ansible: /tmp/jdk-11.0.15_linux-x64_bin.tar.gz
+      java_tar_location_node: /usr/lib/jvm
+      java_env_file: environment.env
+      java_env_file_dest: /etc/environment      

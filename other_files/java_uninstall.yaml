@@ -1,0 +1,14 @@
+
+adhoc_command:  ansible -m ansible.builtin.apt -a 'name=openjdk-11-jdk update_cache=yes state=present' -i hosts all -b
+
+---
+- name: Uninstalling java
+  become: yes
+  hosts: localhost
+  tasks:
+    - name: removing/uninstalling java 
+      ansible.builtin.apt:
+        name: openjdk-11-jdk
+        state: absent
+        purge: yes
+

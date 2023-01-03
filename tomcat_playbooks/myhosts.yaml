@@ -1,0 +1,26 @@
+---
+all:
+  children:
+    appserver:
+      hosts:
+        172.31.27.59:
+          Java_package_Name: openjdk-11-jdk  
+          java_home: /usr/lib/jvm/java-11-openjdk-amd64
+          java_opts: -Djava.security.egd=file:///dev/urandom -Djava.awt.headless=true
+        172.31.24.228:
+          Java_package_Name: java-1.8.0-openjdk-devel  
+          java_home: /usr/lib/jvm/jre
+          java_opts: -Djava.security.egd=file:///dev/urandom
+    vars:
+    tomcat_user_name: tomcat
+    tomcat_home_directory: /opt/tomcat
+    tomcat_shell: /bin/false
+    tomcat_tar_file_url: https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.65/bin/apache-tomcat-9.0.65.tar.gz
+    tomcat_service_file_location: /etc/systemd/system/tomcat.service
+    tomcat_usersxml_location: /opt/tomcat/latest/conf/tomcat-users.xml
+    tomcat_managerxml_location: /opt/tomcat/latest/webapps/manager/META-INF/context.xml
+    tomcat_hostmanagerxml_location: /opt/tomcat/latest/webapps/host-manager/META-INF/context.xml
+    user_username: username
+    user_password: password
+    manager_xml_allow: ".*"
+    hostmanager_xml_allow: ".*"      

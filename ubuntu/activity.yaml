@@ -1,0 +1,21 @@
+---
+- name: creating folders and downloading files
+  become: yes
+  hosts: all
+  tasks:
+    - name: create directory 
+      file:
+        path: /tmp/ansible
+        state: directory
+    - name: create directory 
+      file:
+        path: /tmp/jenkins
+        state: directory
+    - name: create directory 
+      file:
+        path: /tmp/downloadedfile
+        state: directory
+    - name: Downloading file into folder
+      ansible.builtin.get_url:
+        dest: /tmp/downloadedfile
+        url: https://science.nasa.gov/solar-system/documents

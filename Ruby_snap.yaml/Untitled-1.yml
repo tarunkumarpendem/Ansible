@@ -1,0 +1,17 @@
+---
+- name: 
+  become: yes
+  hosts: ubuntu2
+  vars: 
+    software: ruby
+  tasks: 
+    - name: Installing snap
+      ansible.builtin.apt:
+        name: snapd
+        update_cache: yes
+        state: present
+    - name: Installing Ruby
+      community.general.snap:
+        name: "{{ software }}"         
+        classic: yes  
+        state: present  

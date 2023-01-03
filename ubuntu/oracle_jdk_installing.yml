@@ -1,0 +1,26 @@
+---
+- name: Installing oracle java 11
+  become: yes
+  hosts: ubuntu2
+  vars: 
+    Ansible_Node_java_deb_location: ~/jdk-11.0.16_linux-x64_bin.deb
+    profile_d_path: /etc/profile.d/jdk11.sh
+  tasks:
+    - name: Copying the java 11 jdk file from localhost
+      ansible.builtin.copy:
+        src: "{{ Ansible_Node_java_deb_location }}"
+        dest: /tmp/
+    - name: Installing java 11
+      ansible.builtin.apt:
+        deb: /tmp/jdk-11.0.16_linux-x64_bin.deb
+    - name: creating profile.d file
+      ansible.builtin.copy:
+        src: java.sh
+        dest: "{{ profile_d_path }}"
+    - name: reboot 
+      ansible.builtin.reboot:
+        reboot_timeout: 180    
+
+      
+
+      

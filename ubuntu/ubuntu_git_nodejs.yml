@@ -1,0 +1,12 @@
+---
+    - name: installing git and nodejs
+      become: yes
+      hosts: ubuntu
+      tasks:
+        - name: Install git and nodejs
+          ansible.builtin.apt:
+            name:
+              - git
+              - nodejs
+            state: present
+            update_cache: yes

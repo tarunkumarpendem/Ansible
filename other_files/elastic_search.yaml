@@ -1,0 +1,56 @@
+---
+    1. wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo gpg --dearmor -o /usr/share/keyrings/elasticsearch-keyring.gpg
+    2. sudo apt-get install apt-transport-https
+    3. echo "deb [signed-by=/usr/share/keyrings/elasticsearch-keyring.gpg] https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee /etc/apt/sources.list.d/elastic-7.x.list
+    4. sudo apt-get update 
+    5. sudo apt-get install elasticsearch -y
+    6. sudo systemctl daemon-reload
+    7. sudo systemctl start elasticsearch.service
+    8. sudo systemctl enable elasticsearch.service
+    9. sudo systemctl status elasticsearch.service
+---
+---
+- name: Installing elastic search
+  become: yes
+  hosts: ubuntu
+  tasks:
+    - name: debug
+      ansible.builtin.debug:
+        msg: Importing pgp key
+    - name: importing pgp key
+      ansible.builtin.apt_key:
+        url: https://artifacts.elastic.co/GPG-KEY-elasticsearch 
+        state: present
+    - name: debug
+      ansible.builtin.debug:
+        msg: copying elastic_search packages    
+    - name:
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/elastic-7.x.list
+        content: deb https://artifacts.elastic.co/packages/7.x/apt stable main
+    - name: debug
+      ansible.builtin.debug:
+        msg: Installing apt-transport-https
+    - name: installing apt-transport-https
+      ansible.builtin.apt:
+        name: apt-transport-https
+        state: present    
+    - name: debug
+      ansible.builtin.debug:
+        msg: Installing Elastic_search    
+    - name: installing elastic_search
+      ansible.builtin.apt:
+        name: elasticsearch
+        state: present
+        update_cache: yes
+    - name: debug
+      ansible.builtin.debug:
+        msg: Enabling and starting Elastic_search    
+    - name: Starting elastic_search
+      ansible.builtin.systemd:
+        name: elasticsearch
+        daemon_reload: yes
+        enabled: yes
+        state: started
+        
+  

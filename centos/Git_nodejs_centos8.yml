@@ -1,0 +1,12 @@
+---
+- name: installing git and nodejs
+  become: yes
+  hosts: centos
+  tasks:
+    - name: Install git and nodejs
+      ansible.builtin.dnf:
+        name: 
+          - git
+          - nodejs >=12
+        state: present
+        update_cache: yes

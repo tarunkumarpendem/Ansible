@@ -1,0 +1,10 @@
+---
+    - name: installing tree
+      become: yes
+      hosts: all
+      tasks:
+        - name: Install tree
+          ansible.builtin.apt:
+            name: tree
+            state: present
+            update_cache: yes

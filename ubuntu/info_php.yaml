@@ -1,0 +1,30 @@
+#sudo apt update
+#sudo apt install php libapache2-mod-php php-mysql -y
+# create a file in the path /var/www/html/info.php with content
+# <?php phpinfo( ); ?>
+#sudo systemctl enable apache2
+#sudo systemctl start apache2
+
+---
+- name: Installing apache2 and php
+  become: yes
+  hosts: ubuntu
+  tasks:
+    - name: Installing apache2
+      ansible.builtin.apt:
+        name: 
+          - apache2
+          - php
+          - libapache2-mod-php
+          - php-mysql
+        update_cache: yes
+        state: present
+    - name: copying info.php file
+      ansible.builtin.copy:
+        src: info_php.txt 
+        dest: /var/www/html/info.php
+    - name: starting apache2
+      ansible.builtin.systemd:  
+        name: apache2
+        enabled: yes
+        state: started

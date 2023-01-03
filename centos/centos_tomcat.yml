@@ -1,0 +1,67 @@
+---
+- name: Installing tomcat9
+  become: yes
+  hosts: centos
+  vars:
+    java_install: java-1.8.0-openjdk-devel
+    tomcat_user: tomcat 
+    tomcat_home_directory: /opt/tomcat
+    tomcat_shell: /bin/false
+    tomcat_tar_file: https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.65/bin/apache-tomcat-9.0.65.tar.gz
+    tomcat_unit_file_location: /etc/systemd/system/tomcat.service
+  tasks:  
+    - name: using debug
+      ansible.builtin.debug: 
+        msg: Installing java
+    - name: updating centos packages and installing java
+      ansible.builtin.yum:
+        name: "{{ java_install }}"
+        update_cache: yes
+        state: present
+    - name: creating a tomact user 
+      ansible.builtin.user:
+        name: "{{ tomcat_user }}"
+        create_home: yes
+        home: "{{ tomcat_home_directory }}"
+        shell: "{{ tomcat_shell }}"
+    - name: Downloading tomcat's 'tar' file
+      ansible.builtin.get_url:
+        url: "{{ tomcat_tar_file }}"
+        dest: /tmp
+    - name: Extracting the tomcat's 'tar' file
+      ansible.builtin.unarchive:
+        src: /tmp/apache-tomcat-9.0.65.tar.gz
+        dest: "{{ tomcat_home_directory }}"
+        remote_src: yes  
+    - name: Creating a symlink
+      ansible.builtin.file:   
+        src: "{{ tomcat_home_directory }}/apache-tomcat-9.0.65"
+        dest: "{{ tomcat_home_directory }}/latest"
+        owner: "{{ tomcat_user }}"
+        group: "{{ tomcat_user }}"
+        state: link
+    - name: Changing the ownership to tomcat home directory
+      ansible.builtin.file:
+        path: "{{ tomcat_home_directory }}"
+        state: directory
+        recurse: yes   
+        owner: "{{ tomcat_user }}"
+        group: "{{ tomcat_user }}"
+    - name: Giving execute permissions to '.sh' files
+      ansible.builtin.file:
+        path: "{{ item }}"
+        mode: "+x"
+      with_fileglob: 
+        - "{{ tomcat_home_directory }}/latest/bin/*.sh"
+    - name: copying the tomcat's unit file
+      ansible.builtin.copy:
+        remote_src: yes
+        src: tomcat.service
+        dest: "{{ tomcat_unit_file_location }}"
+    - name: reload and start tomcat service
+      ansible.builtin.systemd:
+        name: tomcat
+        daemon_reload: yes
+        enabled: yes
+        state: started
+    

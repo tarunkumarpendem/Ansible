@@ -1,0 +1,43 @@
+---
+- name:
+  become: yes
+  hosts: centos
+  vars:
+    java_install: java-1.8.0-openjdk-devel
+    tomcat_user: tomcat
+    tomcat_shell: /bin/false
+  tasks:  
+    - name: updating centos packages and installing java
+      ansible.builtin.yum:
+        name: "{{ java_install }}"
+        update_cache: yes
+        state: present
+    - name: creating a tomact user 
+      ansible.builtin.user:
+        name: "{{ tomcat_user }}"
+        create_home: yes
+        home: /opt/tomcat
+        shell: "{{ tomcat_shell }}"
+    - name: Downloading tomcat's 'tar' file    
+      ansible.builtin.get_url:
+        url: https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.65/bin/apache-tomcat-9.0.65.tar.gz
+        dest: /tmp    
+    - name: Extracting the tomcat's 'tar' file
+      ansible.builtin.unarchive:
+        src: /tmp/apache-tomcat-9.0.65.tar.gz
+        dest: /opt/tomcat
+        remote_src: yes 
+    - name: Creating a symlink
+      ansible.builtin.file:   
+        src: /opt/tomcat/apache-tomcat-9.0.65
+        dest: /opt/tomcat/latest
+        owner: "{{ tomcat_user }}"
+        group: "{{ tomcat_user }}"
+        state: link    
+    - name: Changing the ownership to tomcat home directory
+      ansible.builtin.file:
+        path: /opt/tomcat
+        state: directory
+        recurse: yes   
+        owner: "{{ tomcat_user }}"
+        group: "{{ tomcat_user }}"

@@ -1,0 +1,33 @@
+---
+- name: Installing Oracle Java 
+  become: yes
+  hosts: ubuntu_server
+  tasks: 
+    - name: using debug  
+      ansible.builtin.debug: 
+        msg: creating directories
+    - name: creating /usr/lib/jvm directory
+      ansible.builtin.file:
+        path: "{{ java_tar_location_node }}"
+        state: directory
+    - name: using debug  
+      ansible.builtin.debug: 
+        msg: copying tomcat 'tar' file    
+    - name: copying oracle 'tar' file
+      ansible.builtin.copy:
+        src: "{{ java_tar_location_ansible }}"
+        dest: "{{ java_tar_location_node }}"
+    - name: using debug  
+      ansible.builtin.debug: 
+        msg: Extracting tomcat 'tar' file
+    - name: Extracting jdk-11 'tar' file    
+      ansible.builtin.unarchive:
+        src: "{{ java_tar_location_ansible }}"
+        dest: "{{ java_tar_location_node }}"
+    - name: copyiing environmnet variable
+      ansible.builtin.copy:
+        src: "{{ java_env_file }}"
+        dest: "{{ java_env_file_dest }}"
+    - name: reboot      
+      ansible.builtin.reboot:
+        reboot_timeout: 180

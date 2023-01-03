@@ -1,0 +1,135 @@
+#  wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+#  sudo dpkg -i packages-microsoft-prod.deb
+#  sudo apt-get update
+#  sudo apt-get install -y apt-transport-https aspnetcore-runtime-6.0
+#  mkdir /var/www/nopCommerce450
+#  sudo wget https://github.com/nopSolutions/nopCommerce/releases/download/release-4.50.3/nopCommerce_4.50.3_NoSource_linux_x64.zip
+#  sudo apt-get install unzip
+#  sudo unzip nopCommerce_4.50.3_NoSource_linux_x64.zip
+#  sudo mkdir bin
+#  sudo mkdir logs
+#  cd ..
+#  sudo chgrp -R www-data nopCommerce450/
+#  sudo chown -R www-data nopCommerce450/
+#  service_file: /etc/systemd/system/nopCommerce450.service
+#  sudo systemctl daemon-reload
+#  sudo systemctl enable nopCommerce450.service
+#  sudo systemctl start nopCommerce450.service
+#  sudo systemctl status nopCommerce450.service
+#  sudo apt-get install nginx
+#  sudo systemctl start nginx
+#  sudo systemctl status nginx
+#  nginx_config_file: /etc/nginx/sites-available/default
+#  sudo systemctl restart nginx
+
+--- 
+- name: Installing nopCommerce application
+  become: yes
+  hosts: ubuntu
+  vars: 
+    default_folder: /home/test
+    debian_package_url: https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb 
+    debian_package: packages-microsoft-prod.deb 
+    nopCommerce_defaultfolder: /var/www/nopCommerce450
+    nopCommerce_zipfile_url: https://github.com/nopSolutions/nopCommerce/releases/download/release-4.50.3/nopCommerce_4.50.3_NoSource_linux_x64.zip
+    nopCommerce_zipfile: nopCommerce_4.50.3_NoSource_linux_x64.zip
+    nopCommerce_servicefile_destination: /etc/systemd/system/nopCommerce450.service
+    nginx_servicefile_location: /etc/nginx/sites-available/default      
+  tasks:
+    - name: creating 'test' folder
+      ansible.builtin.file:
+        path: "{{ default_folder }}"
+        state: directory
+    - name: Downloading debian package
+      ansible.builtin.get_url:
+        url: "{{ debian_package_url }}"         
+        dest: "{{ default_folder }}"
+    - name: Installing deb package
+      ansible.builtin.apt:
+        deb: "{{ default_folder }}/{{ debian_package }}"
+    - name: Installing dotnet packages
+      ansible.builtin.apt:
+        name: 
+          - apt-transport-https
+          - aspnetcore-runtime-6.0
+        update_cache: yes
+        state: present
+    - name: Creating folders
+      ansible.builtin.file:
+        path: "{{ nopCommerce_defaultfolder }}"
+        state: directory
+    - name: Downloading nopCommerce Zip file
+      ansible.builtin.get_url:
+        url: "{{ nopCommerce_zipfile_url }}"
+        dest: "{{ nopCommerce_defaultfolder }}"
+      notify:   
+        - Extracting nopCommerce zip file 
+    - name: Flush handlers
+      meta: flush_handlers         
+    - name: Installing Zip 
+      ansible.builtin.apt:
+        name: unzip
+        state: present
+    - name: creating directories
+      ansible.builtin.file:
+        name: 
+          - bin
+          - logs
+        state: directory
+    - name: changing group permissions  
+      ansible.builtin.file:
+        path: /var/www
+        recurse: yes
+        group: www-data
+        owner: www-data
+    - name: Adding service file
+      ansible.builtin.copy:
+        src: nop.service   
+        dest: "{{ nopCommerce_servicefile_destination }}"
+      notify: 
+        - starting nopCommerce
+    - name: Flush handlers
+      meta: flush_handlers         
+    - name: Installing nginx
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+      notify:  
+        - starting nginx
+    - name: Flush handlers
+      meta: flush_handlers    
+    - name: Adding service file
+      ansible.builtin.copy:
+        src: nginx.service
+        dest: "{{ nginx_servicefile_location }}"
+      notify:
+        - restart nginx  
+    - name: Flush handlers
+      meta: flush_handlers    
+  handlers:
+    - name: Extracting nopCommerce zip file
+      ansible.builtin.unarchive:
+        src: "{{ nopCommerce_defaultfolder }}/{{ nopCommerce_zipfile }}"
+        dest: "{{ nopCommerce_defaultfolder }}"  
+        remote_src: yes    
+    - name: starting nopCommerce
+      ansible.builtin.systemd:
+        name: nopCommerce450
+        daemon_reload: yes
+        enabled: yes
+        state: started 
+    - name: starting nginx
+      ansible.builtin.systemd:
+        name: nginx
+        enabled: yes
+        state: started 
+    - name: restart nginx
+      ansible.builtin.systemd:
+        name: nginx 
+        daemon_reload: yes
+        state: restarted    
+
+                      
+
+
+

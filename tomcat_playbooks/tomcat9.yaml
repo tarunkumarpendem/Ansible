@@ -1,0 +1,159 @@
+# 1  sudo apt update
+# 2  sudo apt install openjdk-11-jdk -y
+# 3  sudo useradd -m -U -d /opt/tomcat -s /bin/false tomcat
+# 4  wget https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.65/bin/apache-tomcat-9.0.65.tar.gz
+# 5  sudo tar -xzvf apache-tomcat-9.0.65.tar.gz -C /opt/tomcat/
+# 6  cd /opt/tomcat
+# 7  sudo ln -s apache-tomcat-9.0.65 /opt/tomcat/latest
+# 8  sudo chown -R tomcat: /opt/tomcat
+# 9  sudo sh -c 'chmod +x /opt/tomcat/latest/bin/*.sh'
+# 10  sudo vi /etc/systemd/system/tomcat.service
+# 11  sudo systemctl daemon-reload
+# 12  sudo systemctl enable --now tomcat
+# 13  sudo systemctl start tomcat
+# 14  sudo systemctl status tomcat
+# 15  sudo vi /opt/tomcat/latest/conf/tomcat-users.xml
+# 16  sudo vi /opt/tomcat/latest/conf/tomcat-users.xml
+# 17  sudo vi /opt/tomcat/latest/webapps/manager/META-INF/context.xml
+# 18  sudo vi /opt/tomcat/latest/webapps/host-manager/META-INF/context.xml
+# 19  sudo systemctl restart tomcat
+
+---
+- name: Installing tomcat
+  become: yes
+  hosts: ubuntu
+  vars:
+    tomcat_user_name: tomcat
+    tomcat_home_directory: /opt/tomcat
+    tomcat_shell: /bin/false
+    tomcat_tar_file_url: https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.65/bin/apache-tomcat-9.0.65.tar.gz
+    tomcat_service_file_location: /etc/systemd/system/tomcat.service
+    tomcat_usersxml_location: /opt/tomcat/latest/conf/tomcat-users.xml
+    tomcat_managerxml_location: /opt/tomcat/latest/webapps/manager/META-INF/context.xml
+    tomcat_hostmanagerxml_location: /opt/tomcat/latest/webapps/host-manager/META-INF/context.xml
+    user_username: username
+    user_password: password
+    manager_xml_allow: ".*"
+    hostmanager_xml_allow: ".*"
+    when:
+    - ansible_facts["distribution"] != "Ubuntu"
+    - ansible_facts["distribution"] != "CentOs"
+    - name: Error message
+      ansible.builtin.fail:
+        msg: This playbook only works for ubuntu & centos Operating Systems only try to run on those O.S's only..
+  tasks:
+    - name: using debug
+      ansible.builtin.debug:
+        msg: Installing Java package
+    - name: Installing java
+      ansible.builtin.package:
+        name: "{{ Java_package_Name }}"
+        state: present
+    - name: using debug
+      ansible.builtin.debug:
+        msg: Creating tomcat user '{{ tomcat_user_name }}' in '{{ tomcat_home_directory }}' in shell  '{{ tomcat_shell }}'
+    - name: creating tomcat user
+      ansible.builtin.user:
+        name: "{{ tomcat_user_name }}"
+        create_home: yes
+        shell: "{{ tomcat_shell }}"
+        home: "{{ tomcat_home_directory }}"
+    - name: using debug
+      ansible.builtin.debug:
+        msg: Downloading tomcat tar file using '{{ tomcat_tar_file_url }}' to '{{ tomcat_home_directory }}'
+    - name: Downloading tomcat's 'tar' file
+      ansible.builtin.get_url:
+        url: "{{ tomcat_tar_file_url }}"
+        dest: "{{ tomcat_home_directory }}"
+      notify:
+        - Extracting tomcat 'tar' file
+    - name: using debug
+      ansible.builtin.debug:
+        msg: Creating a symbolic link 'latest' for tomcat user in  {{ tomcat_home_directory }}
+    - name: create symlink
+      ansible.builtin.file:
+        src: "{{ tomcat_home_directory }}/apache-tomcat-9.0.65"
+        dest: "{{ tomcat_home_directory }}/latest"
+        owner: "{{ tomcat_user_name }}"
+        group: "{{ tomcat_user_name }}"
+        state: link
+    - name: using debug
+      ansible.builtin.debug:
+        msg: changing the ownership permissions of the  '{{ tomcat_home_directory }}' from 'root' to '{{ tomcat_user_name }}'
+    - name: Recursively changing the ownership of tomcat user
+      ansible.builtin.file:
+        path: "{{ tomcat_home_directory }}"
+        recurse: yes
+        owner: "{{ tomcat_user_name }}"
+        group: "{{ tomcat_user_name }}"
+    - name: using debug
+      ansible.builtin.debug:
+        msg: Giving execute permissions to all the '.sh' files in the bin directory of '{{ tomcat_home_directory }}/latest'
+    - name: adding execute permissions to all the '.sh' files
+      ansible.builtin.file:
+        path: "{{ item }}"
+        mode: "+x"
+      with_fileglob:
+        - "{{ tomcat_home_directory }}/latest/bin/*.sh"
+    - name: using debug
+      ansible.builtin.debug:
+        msg: Copying tomcat's service file from 'tomcat_service.j2' to '{{ tomcat_service_file_location }}'
+    - name: copying tomcat unit file
+      ansible.builtin.template:
+        src: tomcat.service.j2
+        dest: "{{ tomcat_service_file_location }}"
+      notify:
+        - restart tomcat
+    - name: using debug
+      ansible.builtin.debug:
+        msg: starting tomcat.service
+    - name: starting tomcat
+      ansible.builtin.systemd:
+        name: tomcat
+        daemon_reload: yes
+        enabled: yes
+        state: started
+    - name: using debug
+      ansible.builtin.debug:
+        msg: Copying users_xml.j2 file to '{{ tomcat_usersxml_location }}'
+    - name: Copying users.xml file
+      ansible.builtin.template:
+        src: users_xml.j2
+        dest: "{{ tomcat_usersxml_location }}"
+      notify:
+        - restart tomcat
+    - name: using debug
+      ansible.builtin.debug:
+        msg: Copying tomcat_manager.xml.j2 file to '{{ tomcat_managerxml_location }}'
+    - name: copying managers.xml file
+      ansible.builtin.template:
+        src: tomcat_manager.xml.j2
+        dest: "{{ tomcat_managerxml_location }}"
+      notify:
+        - restart tomcat
+    - name: using debug
+      ansible.builtin.debug:
+        msg: Copying tomcat_hostmanager.xml.j2 file to '{{ tomcat_hostmanagerxml_location }}'
+    - name: copying hostmanager.xml  file
+      ansible.builtin.template:
+        src: tomcat_hostmanager.xml.j2
+        dest: "{{ tomcat_hostmanagerxml_location }}"
+    - name: using debug
+      ansible.builtin.debug:
+        msg: Restarting the 'tomcat' and ensure it is in running state
+      notify:
+        - restart tomcat
+  handlers:
+    - name: restart tomcat
+      ansible.builtin.systemd:
+        name: tomcat
+        state: restarted
+    - name: using debug
+      ansible.builtin.debug:
+        msg: Extracting tomcat 'tar' file from '{{ tomcat_home_directory }}/apache-tomcat-9.0.65.tar.gz' to '{{ tomcat_home_directory }}'
+    - name: Extracting tomcat 'tar' file
+      ansible.builtin.unarchive:
+        src: "{{ tomcat_home_directory }}/apache-tomcat-9.0.65.tar.gz"
+        dest: "{{ tomcat_home_directory }}"
+        remote_src: yes
+    

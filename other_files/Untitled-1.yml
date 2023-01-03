@@ -1,0 +1,22 @@
+---
+- name: install oracle jdk 11
+  hosts: ubuntu
+  become: no
+  vars:
+    java_acn_deb_location: /tmp/java/jdk-11.0.15.1_linux-x64_bin.deb
+    java_node_deb_location: /tmp/jdk-11.0.15.1_linux-x64_bin.deb
+    profile_d_path: /etc/profile.d/jdk11.sh
+  tasks:
+    - name: copy the oracle jdk deb file
+      ansible.builtin.copy:
+        src: "{{ java_acn_deb_location }}"
+        dest: "{{ java_node_deb_location }}"
+    - name: install jdk debian package
+      ansible.builtin.apt:
+        deb: "{{ java_node_deb_location }}"
+      become: yes
+    - name: create the profile.d file
+      become: yes
+      ansible.builtin.copy:
+        src: jdk.sh
+        dest: "{{ profile_d_path }}"

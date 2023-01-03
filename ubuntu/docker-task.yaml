@@ -1,0 +1,9 @@
+---
+- name: deploying Spring-Pet-Clinic
+  become: yes
+  hosts: all
+  tasks:
+    - name: Downloading Spring-Pet-Clinic 'jar' file
+      ansible.builtin.get_url:
+        url: "https://qtdevopss.jfrog.io/artifactory/spc1-libs-release-local/org/springframework/samples/spring-petclinic/2.7.3/spring-petclinic-2.7.3.jar"
+        dest: /home/ubuntu

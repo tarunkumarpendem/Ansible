@@ -1,0 +1,16 @@
+--- 
+- name: 
+  become: yes
+  hosts: ubuntu
+  tasks: 
+    - name: Installing apache2
+      ansible.builtin.apt:
+        name: apache2
+        update_cache: yes
+        state: present
+    - name: copying text file
+      ansible.builtin.copy:
+        src: hello.txt
+        dest: /var/www/html/info.html
+      notify:
+        - restart apache2        
