@@ -1,0 +1,5 @@
+all:
+  children:
+    ubuntu:
+      hosts:
+        172.31.86.241:  
