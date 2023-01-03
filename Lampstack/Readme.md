@@ -13,3 +13,5 @@ phpinfo();
 ?>`
 to /var/www/your_domain/info.php 
 * Then access the page with public-ip of the machine `http://<public-ip>/info.php` 
+![Preview](Images/ansible1.png)
+![Preview](Images/ansible2.png)
