@@ -1,0 +1,146 @@
+--- 
+- name: Installing Jboss Wildfly 
+  become: yes
+  hosts: all
+  vars:
+    home: /home/ansible
+    java_version: openjdk-11-jdk 
+    group_name: wildfly
+    user_name: wildfly
+    user_shell: /sbin/nologin
+    user_home: /opt/wildfly
+    tar_file_url: https://download.jboss.org/wildfly/22.0.1.Final/wildfly-22.0.1.Final.tar.gz
+    tar_file: wildfly-22.0.1.Final.tar.gz
+    tar_file_extract_location: /opt
+    Extracted_tar_file_location: wildfly-22.0.1.Final
+    wildflyconfig_file_location: /opt/wildfly-22.0.1.Final/docs/contrib/scripts/systemd/wildfly.conf
+    wildflyconfig_file_destination: /etc/wildfly/
+    launchsh_config_file_location: /opt/wildfly-22.0.1.Final/docs/contrib/scripts/systemd/launch.sh
+    launchsh_config_file_destination: /opt/wildfly/bin/
+    wildfile_service_file_location: /opt/wildfly-22.0.1.Final/docs/contrib/scripts/systemd/wildfly.service
+    wildfile_service_file_destination: /etc/systemd/system/wildfly.service
+  tasks:
+    - name: using debug
+      ansible.builtin.debug:
+        msg: Updating ubuntu packages and downloading "{{ java_version }}"
+    - name: Installing openjdk 11
+      ansible.builtin.apt:
+        name: 
+          - "{{ java_version }}"
+          - unzip 
+        update_cache: yes
+        state: present   
+    - name: using debug
+      ansible.builtin.debug:
+        msg: creating group "{{ group_name }}"
+    - name: creating group "{{ group_name }}"
+      ansible.builtin.group:
+        name: "{{ group_name }}"
+        state: present
+    - name: creating an user 
+      ansible.builtin.debug:
+        msg: creating an user "{{ user_name }}" in "{{ user_shell }}" shell
+    - name: creating user
+      ansible.builtin.user:
+        name: "{{ user_name }}"
+        create_home: true 
+        state: present
+        shell: "{{ user_shell }}"
+        group: "{{ group_name }}"   
+        home: "{{ user_home }}" 
+    - name: Downloading wildfly zip file from "{{ tar_file_url }}" to "{{ home }}"
+      ansible.builtin.debug:
+        msg: Downloading wildfly zip file
+    - name: Downloading wildfly zip file 
+      ansible.builtin.get_url:
+        url: "{{ tar_file_url }}"
+        dest: "{{ home }}"
+    - name: using debug
+      ansible.builtin.debug:
+        msg: Extrating zip file
+    - name: Extracting zip file
+      ansible.builtin.unarchive:
+        dest: "{{ tar_file_extract_location }}"
+        src: "{{ home }}/{{ tar_file }}"
+        remote_src: yes 
+    # - name: creating symlink for "{{ user_home }}"
+    #   ansible.builtin.debug:
+    #     msg: creating symlink for "{{ user_home }}"
+    # - name: Creating symlink for "{{ user_home }}"
+    #   ansible.builtin.file:
+    #     src: "{{ user_home }}" 
+    #     dest: "{{ zip_file_extract_location }}/{{ Extracted_zip_file_location }}"
+    #     state: link
+    #     owner: "{{ user_name }}"
+    #     group: "{{ group_name }}"
+    #     force: yes
+    - name: using debug
+      ansible.builtin.debug:
+        msg: changing ownership 
+    - name: changing ownership of "{{ user_home }}" to "wildfly"
+      ansible.builtin.file:
+        owner: "{{ group_name }}"
+        path: "{{ user_home }}"
+        recurse: yes
+        group: "{{ group_name }}" 
+    - name: using debug
+      ansible.builtin.debug:
+        msg: creating "{{ group_name }}" directory in /etc/ folder
+    - name: creating "{{ group_name }}" directory in /etc/ folder
+      ansible.builtin.file:
+        path: "/etc/{{ group_name }}"
+        state: directory
+    - name: using debug
+      ansible.builtin.debug:
+        msg: copying config file
+    - name: copying config file
+      ansible.builtin.copy:
+        src: "{{ wildflyconfig_file_location }}"
+        dest: "{{ wildflyconfig_file_destination }}"
+        remote_src: yes
+    - name: using debug
+      ansible.builtin.debug:
+        msg: copying contents in config file
+    - name: copying config file
+      ansible.builtin.copy:
+        src: /home/ansible/test.txt
+        dest: "{{ wildflyconfig_file_destination }}"   
+    - name: using debug
+      ansible.builtin.debug:
+        msg: copying launch.sh file
+    - name: copying launch.sh file
+      ansible.builtin.copy:
+        src: "{{ launchsh_config_file_location }}"
+        dest: "{{ launchsh_config_file_destination }}"
+        remote_src: yes
+    - name: Change file ownership, group and permissions
+      ansible.builtin.file:
+        path: "{{ user_home }}/bin/launch.sh"
+        owner: "{{ group_name }}"
+        group: "{{ group_name }}"
+        mode: '777'
+    - name: using debug
+      ansible.builtin.debug:
+        msg: copying service file
+    - name: copying service file
+      ansible.builtin.copy:
+        src: "{{ wildfile_service_file_location }}"
+        dest: "{{ wildfile_service_file_destination }}"
+        remote_src: yes 
+    - name: using debug
+      ansible.builtin.debug:
+    - name: starting wildfly service
+      ansible.builtin.systemd:
+        name: wildfly 
+        daemon_reload: yes
+        enabled: yes
+        state: started             
+    - name: starting wildfly service
+      ansible.builtin.service:
+        name: wildfly 
+        state: restarted
+
+
+                 
+
+                
