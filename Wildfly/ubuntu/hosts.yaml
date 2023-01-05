@@ -1,7 +1,8 @@
 ---
 all:
   children:
-    ubuntu:
+    ansible:
       hosts: 
-        172.31.89.110: 
+        172.31.90.138:
+         
   

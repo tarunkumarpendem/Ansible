@@ -1,0 +1,150 @@
+  #   1  sudo apt update && sudo apt install openjdk-11-jdk -y
+  #   2  sudo groupadd -r wildfly
+  #   3  sudo useradd -r -g wildfly -d /opt/wildfly -s /sbin/nologin wildfly
+  #   4  wget https://download.jboss.org/wildfly/22.0.1.Final/wildfly-22.0.1.Final.tar.gz
+  #   5  sudo tar xvf wildfly-22.0.1.Final.tar.gz
+  #   6  sudo mv wildfly-22.0.1.Final/ /opt/wildfly
+  #   7  sudo chown -RH wildfly: /opt/wildfly
+  #   8  sudo mkdir -p /etc/wildfly
+  #   9  sudo cp /opt/wildfly/docs/contrib/scripts/systemd/wildfly.conf /etc/wildfly/
+  #  10  sudo cp /opt/wildfly/docs/contrib/scripts/systemd/launch.sh /opt/wildfly/bin/
+  #  11  sudo sh -c 'chmod +x /opt/wildfly/bin/*.sh'
+  #  12  sudo cp /opt/wildfly/docs/contrib/scripts/systemd/wildfly.service /etc/systemd/system/
+  #  13  sudo systemctl start wildfly.service
+  #  14  sudo systemctl enable wildfly.service
+  #  15  sudo systemctl status wildfly.service
+
+---
+- name: Installing Jboss-wildfly in centos7 
+  become: yes
+  hosts: all
+  vars: 
+    java_package_name: java-11-openjdk-devel
+    group_name: wildfly
+    user_name: wildfly 
+    owner_name: wildfly 
+    user_shell: /sbin/nologin
+    tar_file_url: https://download.jboss.org/wildfly/22.0.1.Final/wildfly-22.0.1.Final.tar.gz
+    tar_file: wildfly-22.0.1.Final.tar.gz
+    Extracted_tar_file: wildfly-22.0.1.Final 
+    home: /opt/wildfly 
+    home_directory: /home/ansible
+    wildfly_service: wildfly
+    wildfly_config_file_location: docs/contrib/scripts/systemd/wildfly.conf
+    launch_shell_file_location: docs/contrib/scripts/systemd/launch.sh 
+    wildfly_service_file_location: docs/contrib/scripts/systemd/wildfly.service
+    wildfly_service_file_destination: /etc/systemd/system/wildfly.service  
+  tasks:
+    - name: using debug
+      ansible.builtin.debug:
+        msg: Updating centos packages and downloading java-11
+    - name: Installing openjdk 11
+      ansible.builtin.yum:
+        name: "{{ java_package_name }}"
+        update_cache: yes
+        state: present   
+    - name: using debug
+      ansible.builtin.debug:
+        msg: creating group 'wildfly'
+    - name: creating group 
+      ansible.builtin.group:
+        name: "{{ group_name }}"
+        state: present
+    - name: creating an user 
+      ansible.builtin.debug:
+        msg: creating an user wildfly in /sbin/nologin shell
+    - name: creating user
+      ansible.builtin.user:
+        name: "{{ user_name }}"
+        create_home: true 
+        state: present
+        shell: "{{ user_shell }}"
+        group: "{{ group_name }}"   
+        home: "{{ home }}"
+    - name: Downloading wildfly tar file 
+      ansible.builtin.debug:
+        msg: Downloading wildfly tar file
+    - name: Downloading wildfly tar file 
+      ansible.builtin.get_url:
+        url: "{{ tar_file_url }}"
+        dest: "{{ home_directory }}"          
+    - name: using debug
+      ansible.builtin.debug:
+        msg: Extrating tar file
+    - name: Extracting tar file
+      ansible.builtin.unarchive:
+        src: "{{ home_directory }}/{{ tar_file }}"
+        dest: "{{ home }}"
+        remote_src: yes
+    - name: moving tar file
+      ansible.builtin.debug:
+        msg: Moving tar file 
+    - name: Moving tar file
+      ansible.builtin.copy:
+        src: "{{ home }}/{{ Extracted_tar_file }}/"
+        dest: "{{ home }}" 
+        owner: "{{ owner_name }}"
+        group: "{{ group_name }}"
+        mode: '777'
+        remote_src: yes
+    - name: using debug
+      ansible.builtin.debug:
+        msg: changing ownership 
+    - name: changing ownership of /opt/wildfly to "wildfly"
+      ansible.builtin.file:
+        owner: "{{ owner_name }}"
+        path: "{{ home }}"
+        recurse: yes
+        group: "{{ group_name }}"    
+        state: directory
+    - name: using debug
+      ansible.builtin.debug:
+        msg: creating wildfly directory in /etc/ folder
+    - name: creating wildfly directory in /etc/ folder
+      ansible.builtin.file:
+        path: /etc/wildfly
+        state: directory 
+    - name: using debug
+      ansible.builtin.debug:
+        msg: copying config file
+    - name: copying config file
+      ansible.builtin.copy:
+        src: "{{ home }}/{{ wildfly_config_file_location }}"
+        dest: /etc/wildfly/
+        remote_src: yes
+    - name: using debug
+      ansible.builtin.debug:
+        msg: copying launch.sh
+    - name: copying launch.sh file
+      ansible.builtin.copy:
+        src: "{{ home }}/{{ launch_shell_file_location }}"
+        dest: "{{ home }}/bin/" 
+        remote_src: yes
+    - name: using debug
+      ansible.builtin.debug:
+        msg: giving execute permissions to .sh files in bin
+    - name: Change file ownership, group and permissions
+      ansible.builtin.file:
+        path: "{{ home }}/bin/launch.sh"
+        mode: "+x" 
+        state: file 
+    - name: using debug
+      ansible.builtin.debug:
+        msg: copying service file
+    - name: copying service file
+      ansible.builtin.copy:
+        src: "{{home}}/{{ wildfly_service_file_location }}"
+        dest: "{{ wildfly_service_file_destination }}"
+        remote_src: yes 
+    - name: using debug
+      ansible.builtin.debug:
+    - name: starting wildfly service
+      ansible.builtin.systemd:
+        name: "{{ wildfly_service }}" 
+        daemon_reload: yes
+        enabled: yes
+        state: started             
+    - name: starting wildfly service
+      ansible.builtin.service:
+        name: "{{ wildfly_service }}" 
+        state: restarted    
