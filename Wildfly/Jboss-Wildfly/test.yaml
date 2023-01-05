@@ -90,7 +90,7 @@
           state: restarted
           daemon_reload: yes
           name: wildfly
-      - name: Restart network service for interface eth0
+      - name: Restart service 
         ansible.builtin.service:
           name: wildfly
           state: started

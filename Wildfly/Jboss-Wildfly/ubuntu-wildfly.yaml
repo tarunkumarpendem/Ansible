@@ -147,4 +147,6 @@
     - name: starting wildfly service
       ansible.builtin.service:
         name: "{{ wildfly_service }}" 
-        state: restarted    
+        state: restarted
+    
+

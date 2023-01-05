@@ -1,0 +1,6 @@
+---
+- name: Installing Ha-Proxy in centos7
+  become: yes
+  hosts: all
+  tasks:
+    - name: 
