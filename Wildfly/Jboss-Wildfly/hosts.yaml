@@ -1,8 +1,13 @@
----
 all:
   children:
-    ansible:
-      hosts: 
-        172.31.90.138:
-         
-  
+    jboss:
+      hosts:
+      # ubuntu
+        172.31.84.209:
+          java_package_name: openjdk-11-jdk
+      # centos    
+        172.31.80.173:
+          java_package_name: java-11-openjdk-devel
+          
+            
+            

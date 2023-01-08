@@ -1,0 +1,71 @@
+# Manual steps for installing ha-proxy in ubuntu 20.04:
+#------------------------------------------------------
+    # 1  sudo apt update && sudo apt upgrade -y
+    # 2  sudo apt install software-properties-common
+    # 3  sudo add-apt-repository ppa:vbernat/haproxy-2.6 -y
+    # 4  sudo apt update && sudo apt install haproxy -y
+    # 5  sudo systemctl status haproxy
+    # 6  sudo cp /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg-org
+    # 7  sudo vi /etc/haproxy/haproxy.cfg
+    # 8  sudo systemctl restart haproxy
+# ------------------------------------------------------------------------
+
+---
+- name: Installing Ha-Proxy in centos
+  become: yes
+  hosts: all
+  tasks:
+    - name: Using debug
+      ansible.builtin.debug:
+        msg: Upgrading Ubuntu packages and installing necessaty software properties
+    - name: Updating packages 
+      ansible.builtin.package:
+        name: software-properties-common
+        state: present
+    - name: Using debug
+      ansible.builtin.debug:
+        msg: Downloading 'ppa:vbernat/haproxy-2.6' repo Using 'apt_repository' module    
+    - name: Downloading 'ppa:vbernat/haproxy-2.6'
+      ansible.builtin.apt_repository: 
+        repo: ppa:vbernat/haproxy-2.6
+        state: present 
+    - name: Using debug
+      ansible.builtin.debug:
+        msg: Installing 'haproxy' latest version
+    - name: Installing haproxy
+      ansible.builtin.apt:
+        name: haproxy
+        update_cache: yes
+        state: present
+    - name: Using debug
+      ansible.builtin.debug:
+        msg: Copying 'haproxy.cfg' file from '/etc/haproxy/haproxy.cfg' to  '/etc/haproxy/haproxy.cfg-org' as a backup
+    - name: Copying 'haproxy.cfg' file for backup
+      ansible.builtin.copy:
+        src: /etc/haproxy/haproxy.cfg
+        dest: /etc/haproxy/haproxy.cfg-org
+        remote_src: yes    
+      notify:
+        - Restarting haproxy
+    - name: Using debug
+      ansible.builtin.debug:
+        msg: Adding 'nodes' to load balancer the nodes from haproxy server
+    - name: Adding nodes
+      ansible.builtin.copy:
+        src: /home/ansible/haproxy.config
+        dest: /etc/haproxy/haproxy.cfg
+      notify:
+        - Restarting haproxy  
+    - name: Using debug
+      ansible.builtin.debug:
+        msg: Restarting haproxy service
+  handlers:      
+    - name: Restarting haproxy
+      ansible.builtin.systemd:
+        name: haproxy
+        daemon_reload: yes
+        enabled: yes
+        state: restarted
+                                
+
+

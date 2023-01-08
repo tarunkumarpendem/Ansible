@@ -1,0 +1,54 @@
+#  1  sudo yum check-update
+#  2  sudo yum install httpd -y
+#  3  sudo systemctl status httpd
+#  4  sudo yum install httpd -y
+#  5  sudo systemctl start httpd.service
+#  6  sudo systemctl enable httpd.service
+#  7  sudo systemctl status httpd
+#  8  sudo yum install php php-mysql
+#  9  sudo systemctl restart httpd.service
+#  10  sudo vi /var/www/html/info.php
+
+
+--- 
+- name: Installing php.info
+  hosts: all 
+  become: yes
+  vars:
+    php_file_path: ./info.php
+    php_file_destination: /var/www/html/info.php
+  tasks:
+    - name: using debug
+      ansible.builtin.debug:
+        msg: Updating centos packages and Installing httpd
+    - name: updating the packages and installing httpd
+      ansible.builtin.yum:
+        name: 
+          - httpd
+          - php 
+          - php-mysql
+        update_cache: yes
+        state: present
+    - name: using debug
+      ansible.builtin.debug:
+        msg: copying info.php to node 
+    - name: copying info.php file
+      ansible.builtin.copy:
+        src: "{{ php_file_path }}" 
+        dest: "{{ php_file_destination }}"
+      notify: 
+        - starting httpd   
+  handlers:      
+    - name: using debug
+      ansible.builtin.debug:
+        msg: starting httpd service    
+    - name: starting httpd
+      ansible.builtin.systemd:  
+        name: httpd
+        enabled: yes
+        state: restarted 
+        daemon_reload: yes   
+    
+        
+        
+              

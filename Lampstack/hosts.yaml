@@ -1,5 +1,15 @@
 all:
   children:
-    ubuntu:
+    webserver:
       hosts:
-        172.31.86.241:  
+        # ubuntu
+        172.31.84.209:
+          package_name_1: apache2
+          package_name_2: php
+        # centos
+        172.31.80.173:
+          package_name_1: httpd
+          package_name_2: php
+          
+            
+            
