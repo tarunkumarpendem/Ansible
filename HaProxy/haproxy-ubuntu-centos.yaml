@@ -1,0 +1,44 @@
+---
+- name: Installing HaProxy in ubuntu 20.04 and centos 7
+  become: yes
+  hosts: webserver
+  tasks: 
+    - name: Using debug
+      ansible.builtin.debug:
+        msg: Updating ubuntu and centos packages and installing haproxy loadbalancer
+    - name: Installing haproxy
+      ansible.builtin.package:
+        name: "{{ package_name }}"
+        state: present
+    - name: Using debug 
+      ansible.builtin.debug:
+        msg: Copying haproxy config file from "haproxy_config_file_default_location" to "haproxy_config_file_backup_location" for backup
+      notify:
+        - Copying config file to another location as a back
+    - name: Using debug
+      ansible.builtin.debug:
+        msg: Adding nodes to haproxy config file
+    - name: Adding nodes to config file
+      ansible.builtin.copy:
+        src: ./haproxy.txt
+        dest: "{{ haproxy_config_file_default_location }}"
+    - name: Using debug
+      ansible.builtin.debug:
+        msg: Starting haproxy service
+      notify:
+        - Starting the service  
+  handlers:
+    - name: Copying config file to another location as a backup
+      ansible.builtin.copy:
+        src: "{{ haproxy_config_file_default_location }}"
+        dest: "{{ haproxy_config_file_backup_location }}"
+        remote_src: yes
+    - name: Starting the service
+      ansible.builtin.systemd:
+        name: haproxy
+        daemon_reload: yes
+        enabled: yes
+        state: restarted    
+              
+                                      
+      

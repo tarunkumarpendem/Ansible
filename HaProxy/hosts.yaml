@@ -1,0 +1,15 @@
+all:
+  children:
+    webserver:
+      hosts:
+        # ubuntu
+        172.31.50.83:
+          package_name: haproxy
+          haproxy_config_file_default_location: /etc/haproxy/haproxy.cfg
+          haproxy_config_file_backup_location: /etc/haproxy/haproxy.cfg.orig
+        # centOS
+        172.31.84.190:
+          package_name: haproxy
+          haproxy_config_file_default_location: /etc/haproxy/haproxy.cfg
+          haproxy_config_file_backup_location: /etc/haproxy/haproxy.cfg.orig
+            

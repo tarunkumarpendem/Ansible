@@ -1,0 +1,56 @@
+---
+- name: install and configure HAproxy on Ubuntu
+  hosts: all
+  become: yes
+  tasks:
+    - name: Update cache and install apache2
+      ansible.builtin.apt:
+        name: apache2
+        state: present
+        update_cache: yes
+      when: ansible_facts["os_family"] != "Debian"
+    - name: Enable and started the apache2 service
+      ansible.builtin.systemd:
+        name: apache2
+        state: started
+        enabled: yes
+      when: ansible_facts["os_family"] != "Debian"
+    - name: Copy using inline content
+      ansible.builtin.copy:
+        content: HAproxy 172.31.18.79
+        dest: /etc/hosts
+      when: ansible_facts["os_family"] != "Debian"
+    - name: Copy the index.html file to web-server1
+      ansible.builtin.copy:
+        src: index.html
+        dest: /var/www/html/index.html
+      when: ansible_facts["hostname"] == "ip-172-31-30-212"
+    - name: Copy the index2.html file to web-server2
+      ansible.builtin.copy:
+        src: index2.html
+        dest: /var/www/html/index.html
+      when: ansible_facts["hostname"] == "ip-172-31-21-13"
+    - name: copy the hostname entries
+      ansible.builtin.copy:
+        src: hostnames
+        dest: /etc/hosts
+      when: ansible_facts["hostname"] == "ip-172-31-18-79"
+    - name: Update cache and install haproxy
+      ansible.builtin.apt:
+        name: haproxy
+        state: present
+        update_cache: yes
+      when: ansible_facts["hostname"] == "ip-172-31-18-79"
+    - name: Insert the configuration data using a local file and validate it
+      ansible.builtin.blockinfile:
+        block: "{{ lookup('ansible.builtin.file', 'haproxy_config') }}"
+        path: /etc/haproxy/haproxy.cfg
+        create: yes
+        state: present
+      when: ansible_facts["hostname"] == "ip-172-31-18-79"
+    - name: Enable and started the haproxy service
+      ansible.builtin.systemd:
+        name: haproxy
+        state: started
+        enabled: yes
+      when: ansible_facts["hostname"] == "ip-172-31-18-79"
