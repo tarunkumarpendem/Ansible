@@ -1,0 +1,11 @@
+all:
+  children:
+    jenkins:
+      hosts:
+      # Ubuntu
+        #172.31.50.83:
+          #java_package_name: openjdk-11-jdk
+      # CentOS  
+        172.31.84.190:
+          #java_package_name: java-11-openjdk-devel
+          
