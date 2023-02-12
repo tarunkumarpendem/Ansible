@@ -65,10 +65,10 @@
         dest: "{{ Default_Location_config_file }}"
       notify:
         - Restarting haproxy  
+  handlers:   
     - name: Using debug
       ansible.builtin.debug:
-        msg: Restarting haproxy service
-  handlers:      
+        msg: Restarting haproxy service   
     - name: Restarting haproxy
       ansible.builtin.systemd:
         name: "{{ Installing_package_name }}"

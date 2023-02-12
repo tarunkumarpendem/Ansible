@@ -1,0 +1,86 @@
+---
+- name: installing tomcat
+  become: yes
+  hosts: all
+  tasks:
+    - name: installing java
+      ansible.builtin.apt:
+        name: openjdk-11-jdk
+        update_cache: yes
+        state: present  
+    - name: creating tomcat group
+      ansible.builtin.group:
+        name: tomcat
+        state: present		
+    - name: adding user to /opt/tomcat
+      ansible.builtin.user:
+        create_home: yes
+        name: tomcat
+        home: /opt/tomcat
+        group: tomcat
+        shell: /bin/false
+    - name: copying tomcat tar tar_file
+      ansible.builtin.get_url:
+        url: https://dlcdn.apache.org/tomcat/tomcat-10/v10.1.5/bin/apache-tomcat-10.1.5.tar.gz
+        dest: /tmp/apache-tomcat-10.1.5.tar.gz 
+    - name: extract-tar_file
+      ansible.builtin.unarchive:
+        src: /tmp/apache-tomcat-10.1.5.tar.gz
+        dest: /opt/tomcat/
+        remote_src: yes 
+    - name: Create a symbolic link
+      ansible.builtin.file:
+        src: /opt/tomcat/apache-tomcat-10.1.5
+        dest: /opt/tomcat/latest
+        owner: tomcat 
+        group: tomcat
+        state: link   
+    - name: Recursively change ownership of a directory
+      ansible.builtin.file:
+        path: /opt/tomcat
+        state: directory
+        recurse: yes
+        owner: tomcat
+        group: tomcat 
+    - name: debug module
+      ansible.builtin.debug: 
+        msg: pushing all scripts to be executable
+    - name: Copy each file over that matches the given pattern
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        mode: "+x"
+      with_fileglob: 
+        - /opt/tomcat/latest/bin/*.sh
+    - name: copying file 
+      ansible.builtin.copy:
+        src: tomcat.service 
+        dest: /etc/systemd/system/tomcat.service
+        owner: tomcat
+        group: tomcat
+    - name: daemon reload
+      ansible.builtin.systemd:
+         name: tomcat
+         daemon_reload: yes
+         enabled: yes
+         state: started
+    - name: adding users.xml
+      ansible.builtin.copy:
+        src: ./users.xml  
+        dest: /opt/tomcat/latest/conf/tomcat-users.xml
+    - name: adding manager-context.xml
+      ansible.builtin.copy:
+        src: ./manager-context.xml
+        dest: /opt/tomcat/latest/webapps/manager/META-INF/context.xml
+    - name: adding host-manager-context.xml
+      ansible.builtin.copy:
+        src: ./host-manager-context.xml
+        dest: /opt/tomcat/latest/webapps/host-manager/META-INF/context.xml
+    - name: restart tomcat
+      ansible.builtin.systemd:
+        name: tomcat
+        daemon_reload: yes
+        enabled: yes
+        state: restarted	
+	
+    		
+		 

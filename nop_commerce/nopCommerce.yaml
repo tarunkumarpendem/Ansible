@@ -65,7 +65,7 @@
       notify:   
         - Extracting nopCommerce zip file 
     - name: Flush handlers
-      meta: flush_handlers         
+      ansible.builtin.meta: flush_handlers         
     - name: Installing Zip 
       ansible.builtin.apt:
         name: unzip
@@ -89,7 +89,7 @@
       notify: 
         - starting nopCommerce
     - name: Flush handlers
-      meta: flush_handlers         
+      ansible.builtin.meta: flush_handlers         
     - name: Installing nginx
       ansible.builtin.apt:
         name: nginx
@@ -97,7 +97,7 @@
       notify:  
         - starting nginx
     - name: Flush handlers
-      meta: flush_handlers    
+      ansible.builtin.meta: flush_handlers    
     - name: Adding service file
       ansible.builtin.copy:
         src: nginx.service
@@ -105,7 +105,7 @@
       notify:
         - restart nginx  
     - name: Flush handlers
-      meta: flush_handlers    
+      ansible.builtin.meta: flush_handlers    
   handlers:
     - name: Extracting nopCommerce zip file
       ansible.builtin.unarchive:
